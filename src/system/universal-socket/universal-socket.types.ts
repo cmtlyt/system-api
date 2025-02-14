@@ -10,6 +10,7 @@ export interface BasePayload {
   roomId: string;
   userId: string;
   operation?: MessageOperation;
+  sign?: any;
 }
 
 export interface RoomPayload extends BasePayload {

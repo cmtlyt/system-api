@@ -23,6 +23,7 @@ export class UniversalSocketGateway {
       roomId,
       metadata: this.universalSocketService.getMetadata(this.server, roomId, payload, client),
       data: payload.data,
+      sign: payload.sign,
     });
   }
 
@@ -30,12 +31,8 @@ export class UniversalSocketGateway {
   async leaveRoom(client: Socket, payload: RoomPayload) {
     const roomId = await this.universalSocketService.leaveRoom(client, payload);
 
-    this.server.to(roomId).emit('leaveRoom', {
-      userId: payload.userId,
-      roomId,
-      metadata: this.universalSocketService.getMetadata(this.server, roomId),
-      data: payload.data,
-    });
+    this.server.to(roomId)
+      .emit('leaveRoom', this.universalSocketService.generateReceverdPayload(this.server, roomId, payload, client));
   }
 
   @SubscribeMessage('getSelfId')
@@ -49,20 +46,12 @@ export class UniversalSocketGateway {
     const { onlySendTarget } = payload.operation || {};
 
     if (onlySendTarget) {
-      this.server.to(onlySendTarget).emit('broadcast', {
-        roomId,
-        userId: payload.userId,
-        metadata: this.universalSocketService.getMetadata(this.server, roomId, payload, client),
-        data: payload.data,
-      });
+      this.server.to(onlySendTarget)
+        .emit('broadcast', this.universalSocketService.generateReceverdPayload(this.server, roomId, payload, client));
       return;
     }
 
-    this.server.to(roomId).emit('broadcast', {
-      roomId,
-      userId: payload.userId,
-      metadata: this.universalSocketService.getMetadata(this.server, roomId, payload, client),
-      data: payload.data,
-    });
+    this.server.to(roomId)
+      .emit('broadcast', this.universalSocketService.generateReceverdPayload(this.server, roomId, payload, client));
   }
 }

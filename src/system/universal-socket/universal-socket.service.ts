@@ -42,4 +42,14 @@ export class UniversalSocketService {
 
     return metadata;
   }
+
+  generateReceverdPayload(server: Server, roomId: string, payload: BasePayload & TObject<any>, client: Socket) {
+    return {
+      roomId,
+      userId: payload.userId,
+      metadata: this.getMetadata(server, roomId, payload, client),
+      data: payload.data,
+      sign: payload.sign,
+    };
+  }
 }
