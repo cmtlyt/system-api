@@ -1,12 +1,13 @@
+import { TObject } from '@cmtlyt/base';
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
-import { JoinRoomPayload } from './types';
+import { Server, Socket } from 'socket.io';
+import { BasePayload, RoomPayload } from './universal-socket.types';
 
 @Injectable()
 export class UniversalSocketService {
   /** 加入房间 */
-  async joinRoom(client: Socket, payload: JoinRoomPayload) {
-    const roomId = payload.roomId.toString();
+  async joinRoom(client: Socket, payload: RoomPayload) {
+    const roomId = String(payload.roomId);
 
     await client.join(roomId);
 
@@ -14,11 +15,31 @@ export class UniversalSocketService {
   }
 
   /** 离开房间 */
-  async leaveRoom(client: Socket, payload: JoinRoomPayload) {
-    const roomId = payload.roomId.toString();
+  async leaveRoom(client: Socket, payload: RoomPayload) {
+    const roomId = String(payload.roomId);
 
     await client.leave(roomId);
 
     return roomId;
+  }
+
+  /** 房间内客户端总数 */
+  clientTotalOfRoom(server: Server, roomId: string) {
+    return server.sockets.adapter.rooms.get(roomId)?.size || 0;
+  }
+
+  getMetadata(server: Server, roomId: string, payload?: BasePayload, client?: Socket) {
+    const metadata: TObject<any> = {
+      clientTotal: this.clientTotalOfRoom(server, roomId),
+      ...(payload?.operation?.customMetadata || {}),
+    };
+
+    const { sendSelfId } = payload?.operation || {};
+
+    if (sendSelfId && client) {
+      metadata.from = client.id;
+    }
+
+    return metadata;
   }
 }
